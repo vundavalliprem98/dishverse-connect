@@ -1,4 +1,52 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+
 const ChefOrders = () => {
+  const { toast } = useToast();
+  const [isQuoteDialogOpen, setIsQuoteDialogOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [quoteAmount, setQuoteAmount] = useState("");
+
+  const handleAccept = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setIsQuoteDialogOpen(true);
+  };
+
+  const handleDecline = (orderId: string) => {
+    toast({
+      title: "Order Declined",
+      description: "You have declined this order.",
+    });
+  };
+
+  const handleQuoteSubmit = () => {
+    if (!quoteAmount) {
+      toast({
+        title: "Error",
+        description: "Please enter a quote amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Quote Submitted",
+      description: "Your quote has been sent to the customer.",
+    });
+    setIsQuoteDialogOpen(false);
+    setQuoteAmount("");
+    setSelectedOrderId(null);
+  };
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold">Orders Management</h1>
@@ -15,36 +63,55 @@ const ChefOrders = () => {
                 <p className="text-gray-600">Time: 10 minutes ago</p>
               </div>
               <span className="px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800">
-                Pending
+                Pending Quote
               </span>
             </div>
             <div className="border-t border-b py-4 my-4">
               <h4 className="font-medium mb-2">Items:</h4>
               <ul className="space-y-2">
-                <li className="flex justify-between">
-                  <span>1x Pizza Margherita</span>
-                  <span>$12.99</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>2x Garlic Bread</span>
-                  <span>$5.98</span>
-                </li>
+                <li>1x Pizza Margherita</li>
+                <li>2x Garlic Bread</li>
               </ul>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="font-bold">Total: $18.97</span>
-              <div className="space-x-2">
-                <button className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-colors">
-                  Accept
-                </button>
-                <button className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-colors">
-                  Reject
-                </button>
-              </div>
+            <div className="flex justify-end items-center space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => handleDecline(order.toString())}
+              >
+                Decline
+              </Button>
+              <Button onClick={() => handleAccept(order.toString())}>
+                Accept & Quote
+              </Button>
             </div>
           </div>
         ))}
       </div>
+
+      <Dialog open={isQuoteDialogOpen} onOpenChange={setIsQuoteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Submit Quote for Order #{selectedOrderId}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="text-sm font-medium mb-2 block">
+              Enter Quote Amount
+            </label>
+            <Input
+              type="number"
+              placeholder="Enter amount"
+              value={quoteAmount}
+              onChange={(e) => setQuoteAmount(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsQuoteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleQuoteSubmit}>Submit Quote</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
