@@ -80,36 +80,45 @@ const ChefOrders = () => {
     setQuoteItems(newQuoteItems);
   };
 
+  // Mock data that matches the CustomerQuote interface
+  const mockOrders: CustomerQuote[] = [
+    {
+      id: "1",
+      customer: "John Doe",
+      fullName: "John Doe",
+      phoneNumber: "+1234567890",
+      address: "123 Main St",
+      eventDate: "2024-04-20",
+      partyLocation: "Grand Hall",
+      vegGuests: 50,
+      nonVegGuests: 50,
+      items: [
+        { name: "Paneer Tikka", quantity: 50 },
+        { name: "Chicken Biryani", quantity: 50 },
+      ],
+    },
+    {
+      id: "2",
+      customer: "Jane Smith",
+      fullName: "Jane Smith",
+      phoneNumber: "+1987654321",
+      address: "456 Oak Ave",
+      eventDate: "2024-05-15",
+      partyLocation: "Conference Center",
+      vegGuests: 30,
+      nonVegGuests: 20,
+      items: [
+        { name: "Breakfast Setup", quantity: 50 },
+        { name: "Lunch Boxes", quantity: 50 },
+      ],
+    },
+  ];
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold">Orders Management</h1>
       <div className="grid grid-cols-1 gap-4">
-        {[
-          {
-            id: "1",
-            customer: "John Doe",
-            fullName: "John Doe",
-            phoneNumber: "+1234567890",
-            address: "123 Main St",
-            eventDate: "2024-04-20",
-            partyLocation: "Grand Hall",
-            vegGuests: 50,
-            nonVegGuests: 50,
-            items: [
-              { name: "Paneer Tikka", quantity: 50 },
-              { name: "Chicken Biryani", quantity: 50 },
-            ],
-          },
-          {
-            id: "2",
-            customer: "Jane Smith",
-            event: "Corporate Event",
-            items: [
-              { name: "Breakfast Setup", quantity: 50 },
-              { name: "Lunch Boxes", quantity: 50 },
-            ],
-          },
-        ].map((order) => (
+        {mockOrders.map((order) => (
           <div
             key={order.id}
             className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
@@ -160,11 +169,11 @@ const ChefOrders = () => {
             {quoteItems.map((item, index) => (
               <div key={item.name} className="space-y-2">
                 <label className="text-sm font-medium block">
-                  Price per plate for {item.name}
+                  Price for {item.name}
                 </label>
                 <Input
                   type="number"
-                  placeholder="Enter price per plate"
+                  placeholder="Enter price"
                   value={item.price}
                   onChange={(e) => updateItemPrice(index, e.target.value)}
                 />
