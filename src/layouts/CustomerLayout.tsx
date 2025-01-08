@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { ShoppingCart, User, Home, Menu } from "lucide-react";
+import { ShoppingCart, User, Home, Menu, Clock } from "lucide-react";
 
 const CustomerLayout = () => {
   const location = useLocation();
@@ -43,6 +43,15 @@ const CustomerLayout = () => {
               <span>Cart</span>
             </Link>
             <Link
+              to="/customer/orders"
+              className={`flex items-center space-x-2 ${
+                isActive("/customer/orders") ? "text-customer-primary" : "text-gray-600"
+              }`}
+            >
+              <Clock size={20} />
+              <span>Orders</span>
+            </Link>
+            <Link
               to="/customer/profile"
               className={`flex items-center space-x-2 ${
                 isActive("/customer/profile") ? "text-customer-primary" : "text-gray-600"
@@ -84,6 +93,15 @@ const CustomerLayout = () => {
           >
             <ShoppingCart size={20} />
             <span className="text-xs mt-1">Cart</span>
+          </Link>
+          <Link
+            to="/customer/orders"
+            className={`flex flex-col items-center ${
+              isActive("/customer/orders") ? "text-customer-primary" : "text-gray-600"
+            }`}
+          >
+            <Clock size={20} />
+            <span className="text-xs mt-1">Orders</span>
           </Link>
           <Link
             to="/customer/profile"

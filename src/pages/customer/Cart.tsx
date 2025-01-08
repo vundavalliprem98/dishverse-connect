@@ -1,16 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { format } from "date-fns";
+import { useCart } from "@/contexts/CartContext";
 
 interface QuoteFormData {
   fullName: string;
@@ -26,20 +21,34 @@ const CustomerCart = () => {
   const { toast } = useToast();
   const [isQuoteFormOpen, setIsQuoteFormOpen] = useState(false);
   const form = useForm<QuoteFormData>();
+  const { state: cartState, dispatch } = useCart();
 
-  // Mock cart items - In a real app, this would come from a cart context or state management
-  const cartItems = [
-    { id: 1, name: "Vegetable Curry", quantity: 1 },
-    { id: 2, name: "Chicken Tikka", quantity: 2 },
-  ];
-
-  const handleQuoteSubmit = (data: QuoteFormData) => {
-    console.log("Quote submitted:", { items: cartItems, ...data });
+  const handleRemoveItem = (itemId: string) => {
+    dispatch({ type: 'REMOVE_ITEM', payload: itemId });
     toast({
-      title: "Quote Request Submitted",
-      description: "Chefs will review your request and provide quotes soon.",
+      title: "Item Removed",
+      description: "Item has been removed from your cart",
     });
+  };
+
+  const handleQuoteSubmit = async (data: QuoteFormData) => {
+    const quoteData = {
+      ...data,
+      items: cartState.items,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+
+    // Here you would typically make an API call to save the quote
+    console.log('Quote submitted:', quoteData);
+    
+    toast({
+      title: "Quote Submitted",
+      description: "Your quote request has been sent to chefs",
+    });
+    
     setIsQuoteFormOpen(false);
+    dispatch({ type: 'CLEAR_CART' });
   };
 
   return (
@@ -48,7 +57,7 @@ const CustomerCart = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
-          {cartItems.map((item) => (
+          {cartState.items.map((item) => (
             <div
               key={item.id}
               className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between"
@@ -59,9 +68,21 @@ const CustomerCart = () => {
                   <p className="text-gray-600">Quantity: {item.quantity}</p>
                 </div>
               </div>
-              <Button variant="destructive" size="sm">Remove</Button>
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={() => handleRemoveItem(item.id)}
+              >
+                Remove
+              </Button>
             </div>
           ))}
+          
+          {cartState.items.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              Your cart is empty
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-6 h-fit">
@@ -69,11 +90,12 @@ const CustomerCart = () => {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span>Total Items</span>
-              <span>{cartItems.reduce((acc, item) => acc + item.quantity, 0)}</span>
+              <span>{cartState.items.reduce((acc, item) => acc + item.quantity, 0)}</span>
             </div>
             <Button 
               className="w-full"
               onClick={() => setIsQuoteFormOpen(true)}
+              disabled={cartState.items.length === 0}
             >
               Proceed to Quote Details
             </Button>
@@ -82,7 +104,7 @@ const CustomerCart = () => {
       </div>
 
       <Dialog open={isQuoteFormOpen} onOpenChange={setIsQuoteFormOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Event Details</DialogTitle>
           </DialogHeader>
@@ -95,7 +117,7 @@ const CustomerCart = () => {
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter your full name" />
+                      <Input {...field} placeholder="Enter your full name" required />
                     </FormControl>
                   </FormItem>
                 )}
