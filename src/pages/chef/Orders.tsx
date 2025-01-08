@@ -6,7 +6,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +17,21 @@ interface OrderItem {
 
 interface QuoteItem {
   name: string;
+  quantity: number;
   price: string;
+}
+
+interface CustomerQuote {
+  id: string;
+  customer: string;
+  fullName: string;
+  phoneNumber: string;
+  address: string;
+  eventDate: string;
+  partyLocation: string;
+  vegGuests: number;
+  nonVegGuests: number;
+  items: OrderItem[];
 }
 
 const ChefOrders = () => {
@@ -28,9 +41,9 @@ const ChefOrders = () => {
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([]);
   const [totalQuote, setTotalQuote] = useState("");
 
-  const handleAccept = (orderId: string, items: OrderItem[]) => {
-    setSelectedOrderId(orderId);
-    setQuoteItems(items.map(item => ({ name: item.name, price: "" })));
+  const handleAccept = (order: CustomerQuote) => {
+    setSelectedOrderId(order.id);
+    setQuoteItems(order.items.map(item => ({ ...item, price: "" })));
     setIsQuoteDialogOpen(true);
   };
 
@@ -75,10 +88,16 @@ const ChefOrders = () => {
           {
             id: "1",
             customer: "John Doe",
-            event: "Wedding Reception",
+            fullName: "John Doe",
+            phoneNumber: "+1234567890",
+            address: "123 Main St",
+            eventDate: "2024-04-20",
+            partyLocation: "Grand Hall",
+            vegGuests: 50,
+            nonVegGuests: 50,
             items: [
-              { name: "Appetizer Platter", quantity: 10 },
-              { name: "Main Course Buffet", quantity: 100 },
+              { name: "Paneer Tikka", quantity: 50 },
+              { name: "Chicken Biryani", quantity: 50 },
             ],
           },
           {
@@ -98,8 +117,10 @@ const ChefOrders = () => {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="font-semibold">Order #{order.id}</h3>
-                <p className="text-gray-600">Customer: {order.customer}</p>
-                <p className="text-gray-600">Event: {order.event}</p>
+                <p className="text-gray-600">Customer: {order.fullName}</p>
+                <p className="text-gray-600">Event Date: {order.eventDate}</p>
+                <p className="text-gray-600">Location: {order.partyLocation}</p>
+                <p className="text-gray-600">Guests: {order.vegGuests + order.nonVegGuests}</p>
               </div>
               <span className="px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800">
                 Pending Quote
@@ -122,7 +143,7 @@ const ChefOrders = () => {
               >
                 Decline
               </Button>
-              <Button onClick={() => handleAccept(order.id, order.items)}>
+              <Button onClick={() => handleAccept(order)}>
                 Accept & Quote
               </Button>
             </div>
@@ -134,19 +155,16 @@ const ChefOrders = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Submit Quote for Order #{selectedOrderId}</DialogTitle>
-            <DialogDescription>
-              Please provide individual item prices and total quote amount
-            </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
             {quoteItems.map((item, index) => (
               <div key={item.name} className="space-y-2">
                 <label className="text-sm font-medium block">
-                  Price for {item.name}
+                  Price per plate for {item.name}
                 </label>
                 <Input
                   type="number"
-                  placeholder="Enter price"
+                  placeholder="Enter price per plate"
                   value={item.price}
                   onChange={(e) => updateItemPrice(index, e.target.value)}
                 />
