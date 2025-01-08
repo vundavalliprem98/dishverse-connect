@@ -2,7 +2,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Clock, CheckCircle2, XCircle } from "lucide-react";
 
-// This would typically come from an API
 const mockOrders = [
   {
     id: "1",
@@ -11,7 +10,7 @@ const mockOrders = [
       { name: "Butter Chicken", quantity: 2 },
       { name: "Naan", quantity: 4 }
     ],
-    quoteAmount: 2500,
+    totalAmount: 2500,
     eventDate: "2024-05-15",
     chefName: "Chef John"
   },
@@ -22,7 +21,7 @@ const mockOrders = [
       { name: "Biryani", quantity: 3 },
       { name: "Raita", quantity: 3 }
     ],
-    quoteAmount: 3000,
+    totalAmount: 3000,
     eventDate: "2024-06-20",
     chefName: "Chef Sarah"
   }
@@ -89,9 +88,9 @@ const OrderTracking = () => {
               </ul>
             </div>
             
-            {order.quoteAmount && (
+            {order.totalAmount && (
               <div className="mb-4">
-                <p className="font-medium">Quote Amount: ₹{order.quoteAmount}</p>
+                <p className="font-medium">Total Amount: ₹{order.totalAmount}</p>
               </div>
             )}
             
