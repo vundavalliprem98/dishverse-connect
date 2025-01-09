@@ -7,7 +7,9 @@ import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import RequireAuth from "@/components/auth/RequireAuth";
 import Login from "@/pages/auth/Login";
+import { useState } from "react";
 
+// Layouts
 import CustomerLayout from "./layouts/CustomerLayout";
 import ChefLayout from "./layouts/ChefLayout";
 import AdminLayout from "./layouts/AdminLayout";
@@ -32,75 +34,78 @@ import AdminCustomers from "./pages/admin/Customers";
 import AdminDeliveryPersonnel from "./pages/admin/DeliveryPersonnel";
 import AdminChefs from "./pages/admin/Chefs";
 
-const queryClient = new QueryClient();
+const App = () => {
+  // Create a stable QueryClient instance
+  const [queryClient] = useState(() => new QueryClient());
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <CartProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Auth Routes */}
-              <Route path="/login" element={<Login />} />
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Auth Routes */}
+                <Route path="/login" element={<Login />} />
 
-              {/* Customer Routes */}
-              <Route
-                path="/customer"
-                element={
-                  <RequireAuth allowedRoles={["customer"]}>
-                    <CustomerLayout />
-                  </RequireAuth>
-                }
-              >
-                <Route index element={<CustomerHome />} />
-                <Route path="menu" element={<CustomerMenu />} />
-                <Route path="cart" element={<CustomerCart />} />
-                <Route path="profile" element={<CustomerProfile />} />
-                <Route path="orders" element={<OrderTracking />} />
-              </Route>
+                {/* Customer Routes */}
+                <Route
+                  path="/customer"
+                  element={
+                    <RequireAuth allowedRoles={["customer"]}>
+                      <CustomerLayout />
+                    </RequireAuth>
+                  }
+                >
+                  <Route index element={<CustomerHome />} />
+                  <Route path="menu" element={<CustomerMenu />} />
+                  <Route path="cart" element={<CustomerCart />} />
+                  <Route path="profile" element={<CustomerProfile />} />
+                  <Route path="orders" element={<OrderTracking />} />
+                </Route>
 
-              {/* Chef Routes */}
-              <Route
-                path="/chef"
-                element={
-                  <RequireAuth allowedRoles={["chef"]}>
-                    <ChefLayout />
-                  </RequireAuth>
-                }
-              >
-                <Route index element={<ChefDashboard />} />
-                <Route path="menu" element={<ChefMenu />} />
-                <Route path="orders" element={<ChefOrders />} />
-                <Route path="profile" element={<ChefProfile />} />
-              </Route>
+                {/* Chef Routes */}
+                <Route
+                  path="/chef"
+                  element={
+                    <RequireAuth allowedRoles={["chef"]}>
+                      <ChefLayout />
+                    </RequireAuth>
+                  }
+                >
+                  <Route index element={<ChefDashboard />} />
+                  <Route path="menu" element={<ChefMenu />} />
+                  <Route path="orders" element={<ChefOrders />} />
+                  <Route path="profile" element={<ChefProfile />} />
+                </Route>
 
-              {/* Admin Routes */}
-              <Route
-                path="/admin"
-                element={
-                  <RequireAuth allowedRoles={["admin"]}>
-                    <AdminLayout />
-                  </RequireAuth>
-                }
-              >
-                <Route index element={<AdminDashboard />} />
-                <Route path="food-menu" element={<AdminFoodMenu />} />
-                <Route path="customers" element={<AdminCustomers />} />
-                <Route path="delivery" element={<AdminDeliveryPersonnel />} />
-                <Route path="chefs" element={<AdminChefs />} />
-              </Route>
+                {/* Admin Routes */}
+                <Route
+                  path="/admin"
+                  element={
+                    <RequireAuth allowedRoles={["admin"]}>
+                      <AdminLayout />
+                    </RequireAuth>
+                  }
+                >
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="food-menu" element={<AdminFoodMenu />} />
+                  <Route path="customers" element={<AdminCustomers />} />
+                  <Route path="delivery" element={<AdminDeliveryPersonnel />} />
+                  <Route path="chefs" element={<AdminChefs />} />
+                </Route>
 
-              {/* Default Route */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </CartProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+                {/* Default Route */}
+                <Route path="/" element={<Navigate to="/login" replace />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </CartProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
