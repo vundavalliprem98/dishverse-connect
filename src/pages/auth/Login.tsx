@@ -12,17 +12,18 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log("Setting up auth state change listener");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session);
         
-        if (event === "SIGNED_IN") {
+        if (event === "SIGNED_IN" && session?.user) {
           try {
-            // Fetch user role from profiles
+            console.log("Fetching user profile for:", session.user.id);
             const { data: profile, error: profileError } = await supabase
               .from("profiles")
               .select("role")
-              .eq("id", session?.user?.id)
+              .eq("id", session.user.id)
               .single();
 
             if (profileError) {
@@ -35,6 +36,7 @@ const Login = () => {
               return;
             }
 
+            console.log("User profile fetched:", profile);
             if (profile) {
               // Redirect based on role
               switch (profile.role) {
@@ -54,12 +56,7 @@ const Login = () => {
           } catch (error) {
             console.error("Error in auth state change:", error);
             if (error instanceof AuthError) {
-              const errorMessage = error.message.includes("missing email") 
-                ? "Please enter your email address"
-                : error.message.includes("invalid credentials")
-                ? "Invalid email or password"
-                : "An error occurred during login";
-              
+              const errorMessage = error.message;
               setError(errorMessage);
               toast({
                 title: "Error",
