@@ -53,7 +53,20 @@ const Login = () => {
             }
           } catch (error) {
             console.error("Error in auth state change:", error);
-            setError("An error occurred during login");
+            if (error instanceof AuthError) {
+              const errorMessage = error.message.includes("missing email") 
+                ? "Please enter your email address"
+                : error.message.includes("invalid credentials")
+                ? "Invalid email or password"
+                : "An error occurred during login";
+              
+              setError(errorMessage);
+              toast({
+                title: "Error",
+                description: errorMessage,
+                variant: "destructive",
+              });
+            }
           }
         } else if (event === "SIGNED_OUT") {
           setError(null);
@@ -65,24 +78,6 @@ const Login = () => {
       subscription.unsubscribe();
     };
   }, [navigate, toast]);
-
-  const handleAuthError = (error: AuthError) => {
-    console.error("Auth error:", error);
-    let errorMessage = "An error occurred during authentication";
-    
-    if (error.message.includes("missing email")) {
-      errorMessage = "Please enter your email address";
-    } else if (error.message.includes("invalid credentials")) {
-      errorMessage = "Invalid email or password";
-    }
-    
-    setError(errorMessage);
-    toast({
-      title: "Error",
-      description: errorMessage,
-      variant: "destructive",
-    });
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -101,7 +96,6 @@ const Login = () => {
           appearance={{ theme: ThemeSupa }}
           providers={[]}
           redirectTo={window.location.origin}
-          onError={handleAuthError}
         />
       </div>
     </div>
