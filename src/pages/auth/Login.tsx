@@ -95,10 +95,24 @@ const Login = () => {
             style: {
               button: { background: 'rgb(59 130 246)', color: 'white' },
               anchor: { color: 'rgb(59 130 246)' },
+              input: { borderRadius: '0.375rem' },
+              message: { color: 'rgb(239 68 68)' }
+            },
+            variables: {
+              default: {
+                colors: {
+                  brand: 'rgb(59 130 246)',
+                  brandAccent: 'rgb(29 78 216)'
+                }
+              }
             }
           }}
           providers={[]}
-          redirectTo={window.location.origin}
+          redirectTo={`${window.location.origin}/auth/callback`}
+          onError={(error) => {
+            console.error("Auth error:", error);
+            setError(error.message);
+          }}
         />
       </div>
     </div>
