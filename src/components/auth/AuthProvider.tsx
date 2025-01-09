@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 type AuthContextType = {
   session: Session | null;
@@ -21,28 +22,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchUserRole = async (userId: string) => {
+    try {
+      console.log("Fetching user role for:", userId);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching user role:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch your profile",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      console.log("User role fetched:", data?.role);
+      return data?.role ?? null;
+    } catch (error) {
+      console.error("Error in fetchUserRole:", error);
+      return null;
+    }
+  };
 
   useEffect(() => {
-    // Get initial session
     const initializeAuth = async () => {
       try {
+        // Get initial session
         const { data: { session } } = await supabase.auth.getSession();
+        console.log("Initial session:", session);
+        
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          await fetchUserRole(session.user.id);
+          const role = await fetchUserRole(session.user.id);
+          setUserRole(role);
         }
-        
+
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (_event, session) => {
             console.log("Auth state changed:", _event);
             setSession(session);
             setUser(session?.user ?? null);
-            
+
             if (session?.user) {
-              await fetchUserRole(session.user.id);
+              const role = await fetchUserRole(session.user.id);
+              setUserRole(role);
             } else {
               setUserRole(null);
             }
@@ -54,32 +87,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
       } catch (error) {
         console.error("Error initializing auth:", error);
+        toast({
+          title: "Error",
+          description: "Failed to initialize authentication",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     initializeAuth();
-  }, []);
-
-  const fetchUserRole = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", userId)
-        .single();
-
-      if (error) {
-        console.error("Error fetching user role:", error);
-        return;
-      }
-
-      setUserRole(data?.role ?? null);
-    } catch (error) {
-      console.error("Error in fetchUserRole:", error);
-    }
-  };
+  }, [toast]);
 
   const signOut = async () => {
     try {
@@ -89,10 +108,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUserRole(null);
     } catch (error) {
       console.error("Error signing out:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
     }
   };
 
-  // Show loading state
   if (loading) {
     return <div>Loading...</div>;
   }
