@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { AuthError } from "@supabase/supabase-js";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -28,11 +29,7 @@ const Login = () => {
 
             if (profileError) {
               console.error("Error fetching profile:", profileError);
-              toast({
-                title: "Error",
-                description: "Failed to fetch user profile",
-                variant: "destructive",
-              });
+              setError("Failed to fetch user profile");
               return;
             }
 
@@ -47,8 +44,6 @@ const Login = () => {
                   navigate("/chef");
                   break;
                 case "customer":
-                  navigate("/customer");
-                  break;
                 default:
                   navigate("/customer");
               }
@@ -56,13 +51,7 @@ const Login = () => {
           } catch (error) {
             console.error("Error in auth state change:", error);
             if (error instanceof AuthError) {
-              const errorMessage = error.message;
-              setError(errorMessage);
-              toast({
-                title: "Error",
-                description: errorMessage,
-                variant: "destructive",
-              });
+              setError(error.message);
             }
           }
         } else if (event === "SIGNED_OUT") {
@@ -71,10 +60,21 @@ const Login = () => {
       }
     );
 
+    // Check if user is already signed in
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        console.log("User already signed in:", session.user);
+        // Let the auth state change handler handle the redirect
+      }
+    };
+
+    checkUser();
+
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, toast]);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -83,14 +83,20 @@ const Login = () => {
           <h2 className="text-3xl font-bold">Welcome Back</h2>
           <p className="mt-2 text-gray-600">Please sign in to your account</p>
           {error && (
-            <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md">
-              {error}
-            </div>
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
         </div>
         <Auth
           supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
+          appearance={{ 
+            theme: ThemeSupa,
+            style: {
+              button: { background: 'rgb(59 130 246)', color: 'white' },
+              anchor: { color: 'rgb(59 130 246)' },
+            }
+          }}
           providers={[]}
           redirectTo={window.location.origin}
         />
