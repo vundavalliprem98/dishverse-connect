@@ -4,6 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import RequireAuth from "@/components/auth/RequireAuth";
+import Login from "@/pages/auth/Login";
 
 import CustomerLayout from "./layouts/CustomerLayout";
 import ChefLayout from "./layouts/ChefLayout";
@@ -33,44 +36,70 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <CartProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Customer Routes */}
-            <Route path="/customer" element={<CustomerLayout />}>
-              <Route index element={<CustomerHome />} />
-              <Route path="menu" element={<CustomerMenu />} />
-              <Route path="cart" element={<CustomerCart />} />
-              <Route path="profile" element={<CustomerProfile />} />
-              <Route path="orders" element={<OrderTracking />} />
-            </Route>
+    <AuthProvider>
+      <CartProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Auth Routes */}
+              <Route path="/login" element={<Login />} />
 
-            {/* Chef Routes */}
-            <Route path="/chef" element={<ChefLayout />}>
-              <Route index element={<ChefDashboard />} />
-              <Route path="menu" element={<ChefMenu />} />
-              <Route path="orders" element={<ChefOrders />} />
-              <Route path="profile" element={<ChefProfile />} />
-            </Route>
+              {/* Customer Routes */}
+              <Route
+                path="/customer"
+                element={
+                  <RequireAuth allowedRoles={["customer"]}>
+                    <CustomerLayout />
+                  </RequireAuth>
+                }
+              >
+                <Route index element={<CustomerHome />} />
+                <Route path="menu" element={<CustomerMenu />} />
+                <Route path="cart" element={<CustomerCart />} />
+                <Route path="profile" element={<CustomerProfile />} />
+                <Route path="orders" element={<OrderTracking />} />
+              </Route>
 
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="food-menu" element={<AdminFoodMenu />} />
-              <Route path="customers" element={<AdminCustomers />} />
-              <Route path="delivery" element={<AdminDeliveryPersonnel />} />
-              <Route path="chefs" element={<AdminChefs />} />
-            </Route>
+              {/* Chef Routes */}
+              <Route
+                path="/chef"
+                element={
+                  <RequireAuth allowedRoles={["chef"]}>
+                    <ChefLayout />
+                  </RequireAuth>
+                }
+              >
+                <Route index element={<ChefDashboard />} />
+                <Route path="menu" element={<ChefMenu />} />
+                <Route path="orders" element={<ChefOrders />} />
+                <Route path="profile" element={<ChefProfile />} />
+              </Route>
 
-            {/* Default Route */}
-            <Route path="/" element={<Navigate to="/customer" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </CartProvider>
+              {/* Admin Routes */}
+              <Route
+                path="/admin"
+                element={
+                  <RequireAuth allowedRoles={["admin"]}>
+                    <AdminLayout />
+                  </RequireAuth>
+                }
+              >
+                <Route index element={<AdminDashboard />} />
+                <Route path="food-menu" element={<AdminFoodMenu />} />
+                <Route path="customers" element={<AdminCustomers />} />
+                <Route path="delivery" element={<AdminDeliveryPersonnel />} />
+                <Route path="chefs" element={<AdminChefs />} />
+              </Route>
+
+              {/* Default Route */}
+              <Route path="/" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </CartProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
