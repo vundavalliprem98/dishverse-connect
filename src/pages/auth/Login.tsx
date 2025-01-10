@@ -11,50 +11,35 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     console.log("Setting up auth state change listener");
-    let authSubscription: { unsubscribe: () => void } | null = null;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
 
-    const setupAuthListener = async () => {
-      try {
-        // Check initial session
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log("Initial session check:", session?.user?.id);
-
-        if (session?.user) {
-          handleUserAuthentication(session.user.id);
-        }
-
-        // Set up auth state change listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            console.log("Auth state changed:", event, session?.user?.id);
-
-            if (event === "SIGNED_IN" && session?.user) {
-              // Add delay to ensure profile is created
-              await new Promise(resolve => setTimeout(resolve, 1500));
-              handleUserAuthentication(session.user.id);
-            } else if (event === "SIGNED_OUT") {
-              setError(null);
-            }
+        if (event === "SIGNED_IN" && session?.user) {
+          setIsLoading(true);
+          try {
+            // Add delay to ensure profile is created
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await handleUserAuthentication(session.user.id);
+          } catch (error) {
+            console.error("Error during authentication:", error);
+            handleError(error);
+          } finally {
+            setIsLoading(false);
           }
-        );
-
-        authSubscription = subscription;
-      } catch (error) {
-        console.error("Error in auth setup:", error);
-        handleError(error);
+        } else if (event === "SIGNED_OUT") {
+          setError(null);
+        }
       }
-    };
-
-    setupAuthListener();
+    );
 
     return () => {
-      if (authSubscription) {
-        console.log("Cleaning up auth listener");
-        authSubscription.unsubscribe();
-      }
+      console.log("Cleaning up auth listener");
+      subscription.unsubscribe();
     };
   }, [navigate]);
 
@@ -80,7 +65,6 @@ const Login = () => {
     try {
       console.log("Fetching user profile for:", userId);
       
-      // Single attempt with longer timeout
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
@@ -115,6 +99,7 @@ const Login = () => {
       }
     } catch (error) {
       handleError(error);
+      throw error; // Re-throw to be caught by the caller
     }
   };
 
@@ -127,6 +112,11 @@ const Login = () => {
           {error && (
             <Alert variant="destructive" className="mt-4">
               <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {isLoading && (
+            <Alert className="mt-4">
+              <AlertDescription>Signing you in...</AlertDescription>
             </Alert>
           )}
         </div>
