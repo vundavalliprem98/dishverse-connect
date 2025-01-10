@@ -14,84 +14,100 @@ const Login = () => {
 
   useEffect(() => {
     console.log("Setting up auth state change listener");
-    
-    // Check if user is already signed in
-    const checkExistingSession = async () => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        console.error("Error checking session:", sessionError);
-        return;
-      }
-      
-      if (session?.user) {
-        handleUserAuthentication(session.user.id);
+    let authSubscription: { unsubscribe: () => void } | null = null;
+
+    const setupAuthListener = async () => {
+      try {
+        // Check initial session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.error("Error checking initial session:", sessionError);
+          return;
+        }
+
+        if (session?.user) {
+          await handleUserAuthentication(session.user.id);
+        }
+
+        // Set up auth state change listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            console.log("Auth state changed:", event, session?.user?.id);
+
+            if (event === "SIGNED_IN" && session?.user) {
+              await handleUserAuthentication(session.user.id);
+            } else if (event === "SIGNED_OUT") {
+              setError(null);
+            }
+          }
+        );
+
+        authSubscription = subscription;
+      } catch (error) {
+        console.error("Error in auth setup:", error);
+        setError("Failed to initialize authentication");
       }
     };
 
-    checkExistingSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth state changed:", event, session);
-        
-        if (event === "SIGNED_IN" && session?.user) {
-          handleUserAuthentication(session.user.id);
-        } else if (event === "SIGNED_OUT") {
-          setError(null);
-        }
-      }
-    );
+    setupAuthListener();
 
     return () => {
-      subscription.unsubscribe();
+      if (authSubscription) {
+        console.log("Cleaning up auth listener");
+        authSubscription.unsubscribe();
+      }
     };
   }, [navigate]);
 
   const handleUserAuthentication = async (userId: string) => {
     try {
       console.log("Fetching user profile for:", userId);
+      
+      // Use single query to get profile
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error("Error fetching profile:", profileError);
-        setError("Failed to fetch user profile. Please try again.");
-        toast({
-          title: "Error",
-          description: "Failed to fetch user profile",
-          variant: "destructive",
-        });
-        return;
+        throw profileError;
+      }
+
+      if (!profile) {
+        console.error("No profile found for user:", userId);
+        throw new Error("User profile not found");
       }
 
       console.log("User profile fetched:", profile);
-      if (profile) {
-        // Redirect based on role
-        switch (profile.role) {
-          case "admin":
-            navigate("/admin");
-            break;
-          case "chef":
-            navigate("/chef");
-            break;
-          case "customer":
-          default:
-            navigate("/customer");
-        }
+
+      // Redirect based on role
+      switch (profile.role) {
+        case "admin":
+          navigate("/admin");
+          break;
+        case "chef":
+          navigate("/chef");
+          break;
+        case "customer":
+        default:
+          navigate("/customer");
       }
     } catch (error) {
-      console.error("Error in auth state change:", error);
+      console.error("Error in user authentication:", error);
+      
+      let errorMessage = "Failed to authenticate user";
       if (error instanceof AuthError) {
-        setError(error.message);
-      } else {
-        setError("An unexpected error occurred");
+        errorMessage = error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
       }
+
+      setError(errorMessage);
       toast({
-        title: "Error",
-        description: "Authentication failed",
+        title: "Authentication Error",
+        description: errorMessage,
         variant: "destructive",
       });
     }
