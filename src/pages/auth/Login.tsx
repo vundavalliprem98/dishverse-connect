@@ -14,67 +14,88 @@ const Login = () => {
 
   useEffect(() => {
     console.log("Setting up auth state change listener");
+    
+    // Check if user is already signed in
+    const checkExistingSession = async () => {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error("Error checking session:", sessionError);
+        return;
+      }
+      
+      if (session?.user) {
+        handleUserAuthentication(session.user.id);
+      }
+    };
+
+    checkExistingSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session);
         
         if (event === "SIGNED_IN" && session?.user) {
-          try {
-            console.log("Fetching user profile for:", session.user.id);
-            const { data: profile, error: profileError } = await supabase
-              .from("profiles")
-              .select("role")
-              .eq("id", session.user.id)
-              .single();
-
-            if (profileError) {
-              console.error("Error fetching profile:", profileError);
-              setError("Failed to fetch user profile");
-              return;
-            }
-
-            console.log("User profile fetched:", profile);
-            if (profile) {
-              // Redirect based on role
-              switch (profile.role) {
-                case "admin":
-                  navigate("/admin");
-                  break;
-                case "chef":
-                  navigate("/chef");
-                  break;
-                case "customer":
-                default:
-                  navigate("/customer");
-              }
-            }
-          } catch (error) {
-            console.error("Error in auth state change:", error);
-            if (error instanceof AuthError) {
-              setError(error.message);
-            }
-          }
+          handleUserAuthentication(session.user.id);
         } else if (event === "SIGNED_OUT") {
           setError(null);
         }
       }
     );
 
-    // Check if user is already signed in
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        console.log("User already signed in:", session.user);
-        // Let the auth state change handler handle the redirect
-      }
-    };
-
-    checkUser();
-
     return () => {
       subscription.unsubscribe();
     };
   }, [navigate]);
+
+  const handleUserAuthentication = async (userId: string) => {
+    try {
+      console.log("Fetching user profile for:", userId);
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        setError("Failed to fetch user profile. Please try again.");
+        toast({
+          title: "Error",
+          description: "Failed to fetch user profile",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("User profile fetched:", profile);
+      if (profile) {
+        // Redirect based on role
+        switch (profile.role) {
+          case "admin":
+            navigate("/admin");
+            break;
+          case "chef":
+            navigate("/chef");
+            break;
+          case "customer":
+          default:
+            navigate("/customer");
+        }
+      }
+    } catch (error) {
+      console.error("Error in auth state change:", error);
+      if (error instanceof AuthError) {
+        setError(error.message);
+      } else {
+        setError("An unexpected error occurred");
+      }
+      toast({
+        title: "Error",
+        description: "Authentication failed",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
