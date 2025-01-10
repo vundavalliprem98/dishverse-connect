@@ -23,7 +23,7 @@ const Login = () => {
         console.log("Initial session check:", session?.user?.id);
 
         if (session?.user) {
-          await handleUserAuthentication(session.user.id);
+          handleUserAuthentication(session.user.id);
         }
 
         // Set up auth state change listener
@@ -33,9 +33,8 @@ const Login = () => {
 
             if (event === "SIGNED_IN" && session?.user) {
               // Add delay to ensure profile is created
-              setTimeout(async () => {
-                await handleUserAuthentication(session.user.id);
-              }, 1000);
+              await new Promise(resolve => setTimeout(resolve, 1500));
+              handleUserAuthentication(session.user.id);
             } else if (event === "SIGNED_OUT") {
               setError(null);
             }
@@ -81,34 +80,20 @@ const Login = () => {
     try {
       console.log("Fetching user profile for:", userId);
       
-      // Retry mechanism for profile fetch
-      let retries = 3;
-      let profile = null;
-      let profileError = null;
+      // Single attempt with longer timeout
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
 
-      while (retries > 0 && !profile) {
-        const result = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", userId)
-          .maybeSingle();
-
-        if (result.error) {
-          profileError = result.error;
-          console.log(`Retry attempt ${4 - retries} failed:`, result.error);
-          retries--;
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } else if (result.data) {
-          profile = result.data;
-          break;
-        } else {
-          retries--;
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        throw new Error("Failed to fetch user profile. Please try again.");
       }
 
       if (!profile) {
-        throw profileError || new Error("Failed to fetch user profile after multiple attempts");
+        throw new Error("User profile not found. Please contact support.");
       }
 
       console.log("User profile fetched successfully:", profile);
@@ -165,7 +150,7 @@ const Login = () => {
             }
           }}
           providers={[]}
-          redirectTo={`${window.location.origin}/auth/callback`}
+          redirectTo={window.location.origin}
           view="sign_in"
           magicLink={false}
           showLinks={true}
