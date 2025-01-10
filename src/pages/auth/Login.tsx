@@ -19,11 +19,8 @@ const Login = () => {
     const setupAuthListener = async () => {
       try {
         // Check initial session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          console.error("Error checking initial session:", sessionError);
-          return;
-        }
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Initial session check:", session?.user?.id);
 
         if (session?.user) {
           await handleUserAuthentication(session.user.id);
@@ -35,7 +32,10 @@ const Login = () => {
             console.log("Auth state changed:", event, session?.user?.id);
 
             if (event === "SIGNED_IN" && session?.user) {
-              await handleUserAuthentication(session.user.id);
+              // Add delay to ensure profile is created
+              setTimeout(async () => {
+                await handleUserAuthentication(session.user.id);
+              }, 1000);
             } else if (event === "SIGNED_OUT") {
               setError(null);
             }
@@ -45,7 +45,7 @@ const Login = () => {
         authSubscription = subscription;
       } catch (error) {
         console.error("Error in auth setup:", error);
-        setError("Failed to initialize authentication");
+        handleError(error);
       }
     };
 
@@ -59,28 +59,62 @@ const Login = () => {
     };
   }, [navigate]);
 
+  const handleError = (error: unknown) => {
+    console.error("Authentication error:", error);
+    let message = "An unexpected error occurred";
+    
+    if (error instanceof AuthError) {
+      message = error.message;
+    } else if (error instanceof Error) {
+      message = error.message;
+    }
+    
+    setError(message);
+    toast({
+      title: "Authentication Error",
+      description: message,
+      variant: "destructive",
+    });
+  };
+
   const handleUserAuthentication = async (userId: string) => {
     try {
       console.log("Fetching user profile for:", userId);
       
-      // Use single query to get profile
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", userId)
-        .maybeSingle();
+      // Retry mechanism for profile fetch
+      let retries = 3;
+      let profile = null;
+      let profileError = null;
 
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-        throw profileError;
+      while (retries > 0 && !profile) {
+        const result = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (result.error) {
+          profileError = result.error;
+          console.log(`Retry attempt ${4 - retries} failed:`, result.error);
+          retries--;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } else if (result.data) {
+          profile = result.data;
+          break;
+        } else {
+          retries--;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
 
       if (!profile) {
-        console.error("No profile found for user:", userId);
-        throw new Error("User profile not found");
+        throw profileError || new Error("Failed to fetch user profile after multiple attempts");
       }
 
-      console.log("User profile fetched:", profile);
+      console.log("User profile fetched successfully:", profile);
+
+      // Clear any existing errors
+      setError(null);
 
       // Redirect based on role
       switch (profile.role) {
@@ -95,21 +129,7 @@ const Login = () => {
           navigate("/customer");
       }
     } catch (error) {
-      console.error("Error in user authentication:", error);
-      
-      let errorMessage = "Failed to authenticate user";
-      if (error instanceof AuthError) {
-        errorMessage = error.message;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-
-      setError(errorMessage);
-      toast({
-        title: "Authentication Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      handleError(error);
     }
   };
 
