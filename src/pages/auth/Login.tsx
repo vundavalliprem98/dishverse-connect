@@ -14,19 +14,18 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const getErrorMessage = (error: AuthError) => {
-    console.error("Authentication error:", error);
+    console.error("Authentication error details:", error);
     
     if (error instanceof AuthApiError) {
       switch (error.status) {
         case 400:
-          if (error.message.includes("Invalid login credentials")) {
-            return "Invalid email or password. Please check your credentials and try again.";
-          }
-          break;
+          return "Invalid email or password. Please check your credentials and try again.";
         case 422:
           return "Invalid email format. Please enter a valid email address.";
         case 429:
           return "Too many login attempts. Please try again later.";
+        default:
+          return `Authentication error: ${error.message}`;
       }
     }
     return error.message;
@@ -104,6 +103,9 @@ const Login = () => {
     // Check if user is already signed in
     const checkSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
+      if (session) {
+        console.log("User already has an active session:", session.user.id);
+      }
       if (error) {
         console.error("Error checking session:", error);
         setError(getErrorMessage(error));
@@ -142,7 +144,11 @@ const Login = () => {
             style: {
               button: { background: 'rgb(59 130 246)', color: 'white' },
               anchor: { color: 'rgb(59 130 246)' },
-              input: { borderRadius: '0.375rem' },
+              input: { 
+                borderRadius: '0.375rem',
+                padding: '0.5rem 1rem',
+                border: '1px solid rgb(209 213 219)'
+              },
               message: { color: 'rgb(239 68 68)' }
             },
             variables: {
@@ -164,6 +170,10 @@ const Login = () => {
               sign_in: {
                 email_label: 'Email address',
                 password_label: 'Password',
+                button_label: 'Sign in',
+                loading_button_label: 'Signing in...',
+                password_input_placeholder: 'Your password',
+                email_input_placeholder: 'Your email address'
               }
             }
           }}
