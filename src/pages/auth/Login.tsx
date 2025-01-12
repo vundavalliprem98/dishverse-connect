@@ -4,7 +4,6 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { AuthError } from "@supabase/supabase-js";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Login = () => {
@@ -24,10 +23,7 @@ const Login = () => {
           setError(null);
           
           try {
-            // Add delay to ensure profile is created
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            
-            // Fetch profile with single() to prevent multiple consumption
+            console.log("Fetching user profile for:", session.user.id);
             const { data: profile, error: profileError } = await supabase
               .from("profiles")
               .select("role")
@@ -40,6 +36,7 @@ const Login = () => {
             }
 
             if (!profile) {
+              console.error("No profile found for user:", session.user.id);
               throw new Error("User profile not found. Please contact support.");
             }
 
@@ -57,6 +54,11 @@ const Login = () => {
               default:
                 navigate("/customer");
             }
+
+            toast({
+              title: "Welcome back!",
+              description: "You have successfully signed in.",
+            });
           } catch (error) {
             console.error("Error during authentication:", error);
             let message = "An unexpected error occurred";
