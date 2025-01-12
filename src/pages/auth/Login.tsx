@@ -20,6 +20,7 @@ const Login = () => {
         if (event === "SIGNED_IN" && session?.user) {
           setIsLoading(true);
           try {
+            // First, get the user's profile to determine their role
             console.log("Fetching user profile for:", session.user.id);
             const { data: profile, error: profileError } = await supabase
               .from("profiles")
@@ -37,23 +38,27 @@ const Login = () => {
               throw new Error("User profile not found");
             }
 
-            console.log("User role:", profile.role);
+            console.log("User role found:", profile.role);
 
             // Role-based navigation
+            let redirectPath = "/customer"; // default path
             switch (profile.role) {
               case "admin":
-                navigate("/admin");
+                redirectPath = "/admin";
                 break;
               case "chef":
-                navigate("/chef");
+                redirectPath = "/chef";
                 break;
               case "customer":
-                navigate("/customer");
+                redirectPath = "/customer";
                 break;
               default:
                 console.error("Unknown role:", profile.role);
                 throw new Error("Invalid user role");
             }
+
+            console.log("Redirecting to:", redirectPath);
+            navigate(redirectPath);
 
             toast({
               title: "Welcome back!",
