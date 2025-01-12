@@ -1,35 +1,15 @@
-import { useEffect, useState } from "react";
+import { Toaster } from "@/components/ui/toaster";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { AuthError, AuthApiError } from "@supabase/supabase-js";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useEffect, useState } from "react";
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  const getErrorMessage = (error: AuthError) => {
-    console.error("Authentication error details:", error);
-    
-    if (error instanceof AuthApiError) {
-      switch (error.status) {
-        case 400:
-          return "Invalid email or password. Please check your credentials and try again.";
-        case 422:
-          return "Invalid email format. Please enter a valid email address.";
-        case 429:
-          return "Too many login attempts. Please try again later.";
-        default:
-          return `Authentication error: ${error.message}`;
-      }
-    }
-    return error.message;
-  };
 
   useEffect(() => {
     console.log("Setting up auth state change listener");
@@ -39,8 +19,6 @@ const Login = () => {
 
         if (event === "SIGNED_IN" && session?.user) {
           setIsLoading(true);
-          setError(null);
-          
           try {
             console.log("Fetching user profile for:", session.user.id);
             const { data: profile, error: profileError } = await supabase
@@ -51,17 +29,17 @@ const Login = () => {
 
             if (profileError) {
               console.error("Error fetching profile:", profileError);
-              throw new Error("Failed to fetch user profile. Please try again.");
+              throw new Error("Failed to fetch user profile");
             }
 
             if (!profile) {
               console.error("No profile found for user:", session.user.id);
-              throw new Error("User profile not found. Please contact support.");
+              throw new Error("User profile not found");
             }
 
-            console.log("User profile fetched successfully:", profile);
+            console.log("User role:", profile.role);
 
-            // Redirect based on role
+            // Role-based navigation
             switch (profile.role) {
               case "admin":
                 navigate("/admin");
@@ -74,7 +52,7 @@ const Login = () => {
                 break;
               default:
                 console.error("Unknown role:", profile.role);
-                throw new Error("Invalid user role. Please contact support.");
+                throw new Error("Invalid user role");
             }
 
             toast({
@@ -87,12 +65,13 @@ const Login = () => {
             if (error instanceof Error) {
               message = error.message;
             }
-            setError(message);
             toast({
               title: "Authentication Error",
               description: message,
               variant: "destructive",
             });
+            // Sign out on error to prevent being stuck in a bad state
+            await supabase.auth.signOut();
           } finally {
             setIsLoading(false);
           }
@@ -112,15 +91,8 @@ const Login = () => {
         <div className="text-center">
           <h2 className="text-3xl font-bold">Welcome Back</h2>
           <p className="mt-2 text-gray-600">Please sign in to your account</p>
-          {error && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
           {isLoading && (
-            <Alert className="mt-4">
-              <AlertDescription>Signing you in...</AlertDescription>
-            </Alert>
+            <p className="mt-2 text-blue-600">Signing you in...</p>
           )}
         </div>
         <Auth
@@ -145,6 +117,7 @@ const Login = () => {
           view="sign_in"
         />
       </div>
+      <Toaster />
     </div>
   );
 };
