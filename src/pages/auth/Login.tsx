@@ -21,18 +21,60 @@ const Login = () => {
 
         if (event === "SIGNED_IN" && session?.user) {
           setIsLoading(true);
+          setError(null);
+          
           try {
             // Add delay to ensure profile is created
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            await handleUserAuthentication(session.user.id);
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Fetch profile with single() to prevent multiple consumption
+            const { data: profile, error: profileError } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", session.user.id)
+              .single();
+
+            if (profileError) {
+              console.error("Error fetching profile:", profileError);
+              throw new Error("Failed to fetch user profile. Please try again.");
+            }
+
+            if (!profile) {
+              throw new Error("User profile not found. Please contact support.");
+            }
+
+            console.log("User profile fetched successfully:", profile);
+
+            // Redirect based on role
+            switch (profile.role) {
+              case "admin":
+                navigate("/admin");
+                break;
+              case "chef":
+                navigate("/chef");
+                break;
+              case "customer":
+              default:
+                navigate("/customer");
+            }
           } catch (error) {
             console.error("Error during authentication:", error);
-            handleError(error);
+            let message = "An unexpected error occurred";
+            if (error instanceof Error) {
+              message = error.message;
+            }
+            setError(message);
+            toast({
+              title: "Authentication Error",
+              description: message,
+              variant: "destructive",
+            });
           } finally {
             setIsLoading(false);
           }
         } else if (event === "SIGNED_OUT") {
           setError(null);
+          setIsLoading(false);
         }
       }
     );
@@ -41,67 +83,7 @@ const Login = () => {
       console.log("Cleaning up auth listener");
       subscription.unsubscribe();
     };
-  }, [navigate]);
-
-  const handleError = (error: unknown) => {
-    console.error("Authentication error:", error);
-    let message = "An unexpected error occurred";
-    
-    if (error instanceof AuthError) {
-      message = error.message;
-    } else if (error instanceof Error) {
-      message = error.message;
-    }
-    
-    setError(message);
-    toast({
-      title: "Authentication Error",
-      description: message,
-      variant: "destructive",
-    });
-  };
-
-  const handleUserAuthentication = async (userId: string) => {
-    try {
-      console.log("Fetching user profile for:", userId);
-      
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", userId)
-        .single();
-
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-        throw new Error("Failed to fetch user profile. Please try again.");
-      }
-
-      if (!profile) {
-        throw new Error("User profile not found. Please contact support.");
-      }
-
-      console.log("User profile fetched successfully:", profile);
-
-      // Clear any existing errors
-      setError(null);
-
-      // Redirect based on role
-      switch (profile.role) {
-        case "admin":
-          navigate("/admin");
-          break;
-        case "chef":
-          navigate("/chef");
-          break;
-        case "customer":
-        default:
-          navigate("/customer");
-      }
-    } catch (error) {
-      handleError(error);
-      throw error; // Re-throw to be caught by the caller
-    }
-  };
+  }, [navigate, toast]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
