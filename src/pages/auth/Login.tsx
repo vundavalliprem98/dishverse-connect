@@ -139,7 +139,10 @@ const Login = () => {
             }
           }}
           providers={[]}
-          redirectTo={window.location.origin}
+          redirectTo={`${window.location.origin}/auth/callback`}
+          onlyThirdPartyProviders={false}
+          magicLink={false}
+          view="sign_in"
         />
       </div>
     </div>
