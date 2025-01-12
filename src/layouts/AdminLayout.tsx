@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -7,9 +7,17 @@ import {
   Users,
   Truck,
   ChefHat,
+  LogOut,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminLayout = () => {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
   const navItems = [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
     { to: "/admin/food-menu", icon: UtensilsCrossed, label: "Food Menu" },
@@ -17,6 +25,23 @@ const AdminLayout = () => {
     { to: "/admin/delivery", icon: Truck, label: "Delivery Personnel" },
     { to: "/admin/chefs", icon: ChefHat, label: "Chefs" },
   ];
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate("/login");
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -45,13 +70,24 @@ const AdminLayout = () => {
                 {label}
               </NavLink>
             ))}
+            <Button
+              variant="ghost"
+              className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
           </nav>
         </aside>
 
         {/* Mobile Header */}
         <div className="lg:hidden fixed top-0 left-0 right-0 border-b bg-background z-50">
-          <div className="flex items-center gap-4 p-4">
+          <div className="flex items-center justify-between p-4">
             <h1 className="text-xl font-bold">Admin Panel</h1>
+            <Button variant="ghost" size="icon" onClick={handleLogout}>
+              <LogOut className="h-5 w-5" />
+            </Button>
           </div>
         </div>
 

@@ -1,10 +1,33 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
-import { ShoppingCart, User, Home, Menu, Clock } from "lucide-react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { ShoppingCart, User, Home, Menu, Clock, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useToast } from "@/hooks/use-toast";
 
 const CustomerLayout = () => {
   const location = useLocation();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate("/login");
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-customer-background">
@@ -60,6 +83,14 @@ const CustomerLayout = () => {
               <User size={20} />
               <span>Profile</span>
             </Link>
+            <Button
+              variant="ghost"
+              className="flex items-center space-x-2 text-gray-600 hover:text-customer-primary"
+              onClick={handleLogout}
+            >
+              <LogOut size={20} />
+              <span>Logout</span>
+            </Button>
           </nav>
         </div>
       </header>
@@ -112,6 +143,13 @@ const CustomerLayout = () => {
             <User size={20} />
             <span className="text-xs mt-1">Profile</span>
           </Link>
+          <button
+            onClick={handleLogout}
+            className="flex flex-col items-center text-gray-600"
+          >
+            <LogOut size={20} />
+            <span className="text-xs mt-1">Logout</span>
+          </button>
         </div>
       </nav>
 

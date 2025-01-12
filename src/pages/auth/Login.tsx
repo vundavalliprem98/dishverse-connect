@@ -70,8 +70,11 @@ const Login = () => {
                 navigate("/chef");
                 break;
               case "customer":
-              default:
                 navigate("/customer");
+                break;
+              default:
+                console.error("Unknown role:", profile.role);
+                throw new Error("Invalid user role. Please contact support.");
             }
 
             toast({
@@ -93,26 +96,9 @@ const Login = () => {
           } finally {
             setIsLoading(false);
           }
-        } else if (event === "SIGNED_OUT") {
-          setError(null);
-          setIsLoading(false);
         }
       }
     );
-
-    // Check if user is already signed in
-    const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (session) {
-        console.log("User already has an active session:", session.user.id);
-      }
-      if (error) {
-        console.error("Error checking session:", error);
-        setError(getErrorMessage(error));
-      }
-    };
-
-    checkSession();
 
     return () => {
       console.log("Cleaning up auth listener");
@@ -150,33 +136,9 @@ const Login = () => {
                 border: '1px solid rgb(209 213 219)'
               },
               message: { color: 'rgb(239 68 68)' }
-            },
-            variables: {
-              default: {
-                colors: {
-                  brand: 'rgb(59 130 246)',
-                  brandAccent: 'rgb(29 78 216)'
-                }
-              }
             }
           }}
           providers={[]}
-          redirectTo={window.location.origin}
-          view="sign_in"
-          magicLink={false}
-          showLinks={true}
-          localization={{
-            variables: {
-              sign_in: {
-                email_label: 'Email address',
-                password_label: 'Password',
-                button_label: 'Sign in',
-                loading_button_label: 'Signing in...',
-                password_input_placeholder: 'Your password',
-                email_input_placeholder: 'Your email address'
-              }
-            }
-          }}
         />
       </div>
     </div>
