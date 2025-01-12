@@ -4,6 +4,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { AuthError, AuthApiError } from "@supabase/supabase-js";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Login = () => {
@@ -11,6 +12,25 @@ const Login = () => {
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const getErrorMessage = (error: AuthError) => {
+    console.error("Authentication error:", error);
+    
+    if (error instanceof AuthApiError) {
+      switch (error.status) {
+        case 400:
+          if (error.message.includes("Invalid login credentials")) {
+            return "Invalid email or password. Please check your credentials and try again.";
+          }
+          break;
+        case 422:
+          return "Invalid email format. Please enter a valid email address.";
+        case 429:
+          return "Too many login attempts. Please try again later.";
+      }
+    }
+    return error.message;
+  };
 
   useEffect(() => {
     console.log("Setting up auth state change listener");
@@ -80,6 +100,17 @@ const Login = () => {
         }
       }
     );
+
+    // Check if user is already signed in
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error checking session:", error);
+        setError(getErrorMessage(error));
+      }
+    };
+
+    checkSession();
 
     return () => {
       console.log("Cleaning up auth listener");
