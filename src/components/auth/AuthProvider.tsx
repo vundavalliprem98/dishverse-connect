@@ -58,25 +58,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const { data: { session } } = await supabase.auth.getSession();
         console.log("Initial session:", session);
         
-        setSession(session);
-        setUser(session?.user ?? null);
-
         if (session?.user) {
+          setSession(session);
+          setUser(session.user);
           const role = await fetchUserRole(session.user.id);
+          console.log("Setting initial user role to:", role);
           setUserRole(role);
         }
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (_event, session) => {
-            console.log("Auth state changed:", _event);
-            setSession(session);
-            setUser(session?.user ?? null);
-
+            console.log("Auth state changed:", _event, session?.user?.id);
+            
             if (session?.user) {
+              setSession(session);
+              setUser(session.user);
               const role = await fetchUserRole(session.user.id);
+              console.log("Setting user role on auth change to:", role);
               setUserRole(role);
             } else {
+              setSession(null);
+              setUser(null);
               setUserRole(null);
             }
           }
