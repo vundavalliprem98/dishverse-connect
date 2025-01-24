@@ -41,7 +41,7 @@ const Login = () => {
             console.log("User role found:", profile.role);
 
             // Role-based navigation
-            let redirectPath = "/customer"; // default path
+            let redirectPath;
             switch (profile.role) {
               case "admin":
                 redirectPath = "/admin";
