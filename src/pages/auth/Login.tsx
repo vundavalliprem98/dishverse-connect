@@ -58,6 +58,7 @@ const Login = () => {
             }
 
             console.log("Redirecting to:", redirectPath);
+            // Force navigation and replace current history entry
             navigate(redirectPath, { replace: true });
 
             toast({
@@ -83,6 +84,29 @@ const Login = () => {
         }
       }
     );
+
+    // Check if user is already authenticated
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        try {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", session.user.id)
+            .single();
+
+          if (profile?.role) {
+            const redirectPath = `/${profile.role}`;
+            navigate(redirectPath, { replace: true });
+          }
+        } catch (error) {
+          console.error("Error checking session:", error);
+        }
+      }
+    };
+
+    checkSession();
 
     return () => {
       console.log("Cleaning up auth listener");
