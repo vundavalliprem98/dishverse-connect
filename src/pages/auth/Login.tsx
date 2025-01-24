@@ -58,7 +58,7 @@ const Login = () => {
             }
 
             console.log("Redirecting to:", redirectPath);
-            navigate(redirectPath);
+            navigate(redirectPath, { replace: true });
 
             toast({
               title: "Welcome back!",
