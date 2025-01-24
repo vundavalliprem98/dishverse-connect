@@ -58,7 +58,6 @@ const Login = () => {
             }
 
             console.log("Redirecting to:", redirectPath);
-            // Force navigation and replace current history entry
             navigate(redirectPath, { replace: true });
 
             toast({
@@ -140,10 +139,15 @@ const Login = () => {
             }
           }}
           providers={[]}
-          redirectTo={`${window.location.origin}/auth/callback`}
-          onlyThirdPartyProviders={false}
-          magicLink={false}
           view="sign_in"
+          localization={{
+            variables: {
+              sign_in: {
+                email_label: 'Email address',
+                password_label: 'Password',
+              }
+            }
+          }}
         />
       </div>
       <Toaster />
