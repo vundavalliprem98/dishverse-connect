@@ -7,6 +7,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import RequireAuth from "@/components/auth/RequireAuth";
 import Login from "@/pages/auth/Login";
+import Unauthorized from "@/pages/auth/Unauthorized";
 import { useState } from "react";
 
 // Layouts
@@ -35,7 +36,6 @@ import AdminDeliveryPersonnel from "./pages/admin/DeliveryPersonnel";
 import AdminChefs from "./pages/admin/Chefs";
 
 const App = () => {
-  // Create a stable QueryClient instance
   const [queryClient] = useState(() => new QueryClient());
 
   return (
@@ -49,6 +49,7 @@ const App = () => {
               <Routes>
                 {/* Auth Routes */}
                 <Route path="/login" element={<Login />} />
+                <Route path="/unauthorized" element={<Unauthorized />} />
 
                 {/* Customer Routes */}
                 <Route
