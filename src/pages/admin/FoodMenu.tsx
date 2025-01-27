@@ -14,7 +14,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/components/auth/AuthProvider";
 
 type FoodItem = {
   id: string;
@@ -25,7 +24,6 @@ type FoodItem = {
 
 const FoodMenu = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -40,7 +38,6 @@ const FoodMenu = () => {
         name,
         description,
         price: parseFloat(price),
-        created_by: user?.id,
       });
 
       if (error) throw error;

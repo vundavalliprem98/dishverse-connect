@@ -10,11 +10,9 @@ import {
   LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 
 const AdminLayout = () => {
-  const { signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -26,21 +24,12 @@ const AdminLayout = () => {
     { to: "/admin/chefs", icon: ChefHat, label: "Chefs" },
   ];
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      navigate("/login");
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to log out. Please try again.",
-        variant: "destructive",
-      });
-    }
+  const handleLogout = () => {
+    navigate("/");
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
   };
 
   return (
