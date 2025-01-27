@@ -50,6 +50,7 @@ const Chefs = () => {
       if (error) throw error;
       setChefs(data || []);
     } catch (error: any) {
+      console.error("Error fetching chefs:", error);
       toast({
         title: "Error fetching chefs",
         description: error.message,
@@ -61,26 +62,20 @@ const Chefs = () => {
   const handleAddChef = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Create auth user with email
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email,
-        email_confirm: true,
-        user_metadata: { firstName, lastName },
-      });
-
-      if (authError) throw authError;
-
-      // Update the user's role to chef in profiles
+      // Instead of directly creating a user, we'll insert into profiles
+      // and let the admin manually create their account later
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ role: "chef" })
-        .eq("id", authData.user.id);
+        .insert({
+          email,
+          role: "chef",
+        });
 
       if (profileError) throw profileError;
 
       toast({
-        title: "Chef added successfully",
-        description: "An email has been sent to set their password.",
+        title: "Chef profile created",
+        description: "The chef's profile has been created successfully.",
       });
       setIsOpen(false);
       setEmail("");
@@ -88,6 +83,7 @@ const Chefs = () => {
       setLastName("");
       fetchChefs();
     } catch (error: any) {
+      console.error("Error adding chef:", error);
       toast({
         title: "Error adding chef",
         description: error.message,
