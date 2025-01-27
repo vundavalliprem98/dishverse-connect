@@ -34,35 +34,6 @@ export type Database = {
           name?: string
           price?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "food_items_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      profiles: {
-        Row: {
-          created_at: string | null
-          email: string
-          id: string
-          role: Database["public"]["Enums"]["user_role"]
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          id: string
-          role?: Database["public"]["Enums"]["user_role"]
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          id?: string
-          role?: Database["public"]["Enums"]["user_role"]
-        }
         Relationships: []
       }
     }
