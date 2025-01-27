@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -24,6 +24,8 @@ import { supabase } from "@/integrations/supabase/client";
 type Chef = {
   id: string;
   email: string;
+  role: string;
+  created_at: string;
 };
 
 const Chefs = () => {
@@ -32,6 +34,29 @@ const Chefs = () => {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [chefs, setChefs] = useState<Chef[]>([]);
+
+  useEffect(() => {
+    fetchChefs();
+  }, []);
+
+  const fetchChefs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("role", "chef");
+
+      if (error) throw error;
+      setChefs(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error fetching chefs",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleAddChef = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +86,7 @@ const Chefs = () => {
       setEmail("");
       setFirstName("");
       setLastName("");
+      fetchChefs();
     } catch (error: any) {
       toast({
         title: "Error adding chef",
@@ -130,13 +156,21 @@ const Chefs = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* Chef list will be populated here */}
+            {chefs.map((chef) => (
+              <TableRow key={chef.id}>
+                <TableCell>{chef.email}</TableCell>
+                <TableCell className="text-right">
+                  <Button variant="outline" size="sm">
+                    Manage
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
