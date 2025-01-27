@@ -63,12 +63,14 @@ const Chefs = () => {
     e.preventDefault();
     try {
       // Generate a UUID for the new profile
-      const { data: newId } = await supabase.rpc('uuid_generate_v4');
+      const { data: uuidResult, error: uuidError } = await supabase.rpc('uuid_generate_v4');
+      
+      if (uuidError) throw uuidError;
       
       const { error: profileError } = await supabase
         .from("profiles")
         .insert({
-          id: newId,
+          id: uuidResult,
           email,
           role: "chef",
         });
