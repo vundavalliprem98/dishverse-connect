@@ -62,11 +62,13 @@ const Chefs = () => {
   const handleAddChef = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Instead of directly creating a user, we'll insert into profiles
-      // and let the admin manually create their account later
+      // Generate a UUID for the new profile
+      const { data: newId } = await supabase.rpc('uuid_generate_v4');
+      
       const { error: profileError } = await supabase
         .from("profiles")
         .insert({
+          id: newId,
           email,
           role: "chef",
         });
